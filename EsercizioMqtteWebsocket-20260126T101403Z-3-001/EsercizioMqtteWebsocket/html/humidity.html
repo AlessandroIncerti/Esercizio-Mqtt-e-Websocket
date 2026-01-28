@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Sensor Dashboard</title>
+</head>
+<body>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<h1>Dashboard Sensore – Umidità</h1>
+
+
+
+
+<select name="sensors" id="sensors">
+    <option value="temperature">temperature</option>
+    <option value="humidity">humidity</option>
+    <option value="pressure">pressure</option>
+</select>
+
+<button type="button" onclick=getvalue()>conferma</button>
+
+
+
+
+
+<h3>Dati grezzi (MQTT)</h3>
+<pre id="raw">---</pre>
+
+<h3>Dati formattati</h3>
+<p id="formatted">---</p>
+
+
+
+
+
+
+
+<canvas id="chart"></canvas>
+
+
+
+
+
+
+<script>
+
+    async function getvalue(){
+        const sensor = document.getElementById("sensors").value;
+        location.href = sensor+".html";
+    }
+
+
+
+const ws = new WebSocket("ws://localhost:8888/ws");
+
+const raw = document.getElementById("raw");
+const formatted = document.getElementById("formatted");
+
+ws.onopen = () => {
+    console.log("WebSocket aperto");
+};
+
+
+
+
+
+const ctx = document.getElementById("chart");
+
+const chart = new Chart(ctx, {
+    type: "line",        // tipo di grafico (line = grafico a linee)
+    data: {
+        labels: [],      // asse orizzontale (tempo, indice, ecc.)
+        datasets: [{
+            label: "Valore sensore", // nome della linea nel grafico
+            data: [],                // valori numerici del sensore
+            borderWidth: 2
+        }]
+    },
+    options: {
+        animation: false,
+        scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+});
+
+
+
+
+ws.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+
+    // gestisce solo messaggi di tipo sensore
+    if (msg.type !== "sensor") return;
+
+    const data = msg.data;
+
+    // filtra solo il sensore umidità
+    if (data.sensor !== "humidity") return;
+
+    const time = new Date().toLocaleTimeString();
+
+    // dati grezzi
+    raw.textContent = JSON.stringify(data, null, 2);
+
+    // dati formattati
+    formatted.textContent =
+        `Umidità: ${data.valore} °${data.unit} (ore ${time})`;
+
+    if (chart.data.labels.length > 20) {
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
+    }
+
+    chart.data.labels.push(time);
+    chart.data.datasets[0].data.push(data.valore);
+    chart.update();
+
+};
+
+
+
+
+ws.onclose = () => {
+    console.log("WebSocket chiuso");
+};
+</script>
+
+</body>
+</html>

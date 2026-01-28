@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Sensor Dashboard</title>
+</head>
+<body>
+
+<h1>Scelta sensori</h1>
+
+
+
+
+<select name="sensors" id="sensors">
+    <option value="temperature">temperature</option>
+    <option value="humidity">humidity</option>
+    <option value="pressure">pressure</option>
+</select>
+
+<button type="button" onclick=getvalue()>conferma</button>
+
+
+
+
+<script>
+
+    async function getvalue(){
+        const sensor = document.getElementById("sensors").value;
+        location.href = sensor+".html";
+    }
+
+</script>
+
+</body>
+</html>
